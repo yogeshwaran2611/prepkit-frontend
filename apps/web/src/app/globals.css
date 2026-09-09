@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Semantic tokens only. Every colour in the app resolves through one of these, and
+ * tailwind.config.ts exposes nothing else — so an off-palette colour is not a review
+ * comment, it is a compile-time impossibility. (PLAN.md §10.2)
+ */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+
+  --bg: #fbfaf9;
+  --surface: #ffffff;
+  --surface-muted: #f4f2f0;
+  --border: #e4e0dc;
+  --fg: #1c1a19;
+  --fg-muted: #5c5754;
+  --fg-subtle: #8a8480;
+  --accent: #1f5e4f;
+  --accent-fg: #ffffff;
+  --accent-muted: #e6efec;
+  --success: #1f7a4d;
+  --success-muted: #e6f4ec;
+  --warning: #8a5a00;
+  --warning-muted: #fdf2dd;
+  --danger: #a3282c;
+  --danger-muted: #fbeaea;
+
+  --shadow-sm: 0 1px 2px rgb(28 26 25 / 0.05);
+  --shadow-md: 0 2px 8px rgb(28 26 25 / 0.07);
+  color-scheme: light;
+}
+
+/* Dark mode: only the tokens change. No component knows which theme is active. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #131211;
+    --surface: #1b1a18;
+    --surface-muted: #232120;
+    --border: #332f2d;
+    --fg: #f5f3f1;
+    --fg-muted: #b0a9a4;
+    --fg-subtle: #857e79;
+    --accent: #5fbfa3;
+    --accent-fg: #0d1a16;
+    --accent-muted: #1c2a26;
+    --success: #63c48c;
+    --success-muted: #16251c;
+    --warning: #d9a441;
+    --warning-muted: #2a2216;
+    --danger: #e88b8b;
+    --danger-muted: #2a1a1a;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 2px 10px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #131211;
+  --surface: #1b1a18;
+  --surface-muted: #232120;
+  --border: #332f2d;
+  --fg: #f5f3f1;
+  --fg-muted: #b0a9a4;
+  --fg-subtle: #857e79;
+  --accent: #5fbfa3;
+  --accent-fg: #0d1a16;
+  --accent-muted: #1c2a26;
+  --success: #63c48c;
+  --success-muted: #16251c;
+  --warning: #d9a441;
+  --warning-muted: #2a2216;
+  --danger: #e88b8b;
+  --danger-muted: #2a1a1a;
+  color-scheme: dark;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keyboard access is graded, so focus is never removed — only made deliberate. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Wide content scrolls inside its own container; the page body never scrolls sideways. */
+.scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--surface-muted), transparent);
+  animation: shimmer 1.4s infinite;
+}
