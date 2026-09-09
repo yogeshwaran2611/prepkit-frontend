@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Flashcard, Kit } from '@prepkit/schema';
+import type { Flashcard, Kit } from '@/lib/kit-types';
 import { ApiError, api, type PracticeEventView } from '@/lib/api';
 import { AppShell } from '@/components/patterns/shell';
 import { AsyncBoundary, PageHeader, StatChip } from '@/components/patterns';

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Kit } from '@prepkit/schema';
+import type { Kit } from '@/lib/kit-types';
 import { ApiError, api, type KitDetail } from '@/lib/api';
 import { STEP_LABELS, STEP_ORDER, useJobProgress, type MergeSummary } from '@/hooks/useJobProgress';
 import { AppShell } from '@/components/patterns/shell';

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import type { Kit } from '@prepkit/schema';
+import type { Kit } from '@/lib/kit-types';
 import { ApiError, api, type WeakSpotsResponse } from '@/lib/api';
 import { AppShell } from '@/components/patterns/shell';
 import { AsyncBoundary, PageHeader, StatChip } from '@/components/patterns';

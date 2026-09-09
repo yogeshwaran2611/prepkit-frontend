@@ -1,4 +1,4 @@
-import type { Kit } from '@prepkit/schema';
+import type { Kit } from '@/lib/kit-types';
 
 /**
  * The single place the browser talks to the API.

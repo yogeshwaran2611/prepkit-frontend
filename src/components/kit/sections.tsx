@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import type { Flashcard, Kit, Question, QuestionCategory, Requirement } from '@prepkit/schema';
+import type { Flashcard, Kit, Question, QuestionCategory, Requirement } from '@/lib/kit-types';
 import {
   AsyncBoundary,
   CoverageMeter,
