@@ -212,7 +212,7 @@ export default function KitPage() {
           }
         >
           {kit ? (
-            <div className="grid gap-5 lg:grid-cols-[200px_1fr]">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[200px_1fr]">
               <SectionNav kit={kit} />
               <div className="min-w-0 space-y-5">
                 <KitStats kit={kit} />
@@ -285,7 +285,15 @@ function SectionNav({ kit }: { kit: Kit }) {
   }, [items]);
 
   return (
-    <nav aria-label="Kit sections" className="lg:sticky lg:top-24 lg:self-start rounded-xl border border-border bg-surface p-2 shadow-sm">
+    <nav
+      aria-label="Kit sections"
+      // min-w-0 matters here: this is a grid item whose own child scrolls horizontally
+      // (scroll-x below). Without it, a grid/flex item's default min-width:auto refuses to
+      // shrink below its content's intrinsic width, so the GRID TRACK grows to fit the pill
+      // strip instead of the pill strip scrolling inside a fixed-width track — which is what
+      // caused the whole page to scroll sideways on a phone.
+      className="min-w-0 lg:sticky lg:top-24 lg:self-start rounded-xl border border-border bg-surface p-2 shadow-sm"
+    >
       <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-fg-subtle border-b border-border mb-1 hidden lg:block">
         Navigation
       </div>

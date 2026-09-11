@@ -58,6 +58,12 @@
 html {
   background: var(--bg);
   min-height: 100%;
+  /* Backstop, not the fix: a flex/grid item's default min-width:auto can still make an
+     ancestor grow past the viewport (found on the kit page's mobile layout — fixed at the
+     source by adding min-w-0 down the actual offending chain). This just guarantees the
+     PAGE never gains a horizontal scrollbar even if a future component reintroduces the
+     same mistake somewhere else. */
+  overflow-x: hidden;
 }
 
 body {
@@ -66,6 +72,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 * {
