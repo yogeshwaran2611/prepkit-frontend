@@ -73,18 +73,18 @@ export default function WeakSpotsPage() {
           skeleton={<Skeleton className="h-64 w-full" />}
         >
           {report ? (
-            <div className="space-y-4">
-              <div className="scroll-x flex gap-2">
-                <StatChip label="Cards practised" value={`${report.practisedCards} of ${report.totalCards}`} />
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <StatChip label="Cards Practised" value={`${report.practisedCards} of ${report.totalCards}`} tone="blue" />
                 <StatChip
-                  label="High risk"
+                  label="High Risk Areas"
                   value={report.spots.filter((s) => s.risk >= 55).length}
-                  tone="danger"
+                  tone="red"
                 />
                 <StatChip
-                  label="Must-haves at risk"
+                  label="Must-Haves At Risk"
                   value={report.spots.filter((s) => s.priority === 'must' && s.risk >= 40).length}
-                  tone="warning"
+                  tone="orange"
                 />
               </div>
 

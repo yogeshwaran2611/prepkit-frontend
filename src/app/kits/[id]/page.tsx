@@ -123,13 +123,15 @@ export default function KitPage() {
     <AppShell
       right={
         kit ? (
-          <div className="hidden items-center gap-2 sm:flex">
+          <div className="hidden items-center gap-2.5 sm:flex">
             <Link href={`/kits/${kitId}/practice`}>
-              <Button size="sm">Practise</Button>
+              <Button size="sm" variant="secondary">
+                Practise Cards
+              </Button>
             </Link>
             <Link href={`/kits/${kitId}/weak-spots`}>
               <Button size="sm" variant="primary">
-                Weak spots
+                Weak Spots Report
               </Button>
             </Link>
           </div>
@@ -140,27 +142,23 @@ export default function KitPage() {
 
       <PageHeader
         title={kit?.role.title || detail?.input.companyUrl || 'Kit'}
+        back={{ href: '/kits', label: 'All kits' }}
         subtitle={
           kit ? (
             <span className="flex flex-wrap items-center gap-2">
-              <span>{kit.source.company}</span>
+              <span className="font-semibold text-fg">{kit.source.company}</span>
               <span className="text-fg-subtle">·</span>
               <span>{kit.schedule.days_available} day plan</span>
               {kit.source.pages_used.length ? (
                 <>
                   <span className="text-fg-subtle">·</span>
-                  <span>{kit.source.pages_used.length} pages read</span>
+                  <span>{kit.source.pages_used.length} sources crawled</span>
                 </>
               ) : null}
             </span>
           ) : (
             detail?.input.companyUrl
           )
-        }
-        actions={
-          <Link href="/kits" className="text-sm text-accent underline">
-            All kits
-          </Link>
         }
       />
 
@@ -239,44 +237,81 @@ function KitStats({ kit }: { kit: Kit }) {
     musts.some((r) => r.id === id),
   ).length;
   return (
-    <div className="scroll-x flex gap-2 pb-1">
-      <StatChip label="Requirements" value={`${kit.role.requirements.length} (${musts.length} must)`} />
-      <StatChip label="Questions" value={kit.questions.length} />
-      <StatChip label="Flashcards" value={kit.flashcards.length} />
-      <StatChip label="Coverage passes" value={kit.coverage.passes} />
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <StatChip label="Requirements" value={`${kit.role.requirements.length} (${musts.length} must)`} tone="blue" />
+      <StatChip label="Questions" value={kit.questions.length} tone="purple" />
+      <StatChip label="Flashcards" value={kit.flashcards.length} tone="orange" />
+      <StatChip label="Coverage Passes" value={kit.coverage.passes} tone="indigo" />
       <StatChip
-        label="Uncovered musts"
+        label="Uncovered Musts"
         value={uncoveredMusts}
-        tone={uncoveredMusts === 0 ? 'success' : 'danger'}
+        tone={uncoveredMusts === 0 ? 'green' : 'red'}
       />
-      <StatChip label="Days" value={kit.schedule.days.length} />
+      <StatChip label="Plan Days" value={`${kit.schedule.days.length}d`} tone="neutral" />
     </div>
   );
 }
 
-/** Sticky section nav — the page is long, and a phone needs a way to jump. */
 function SectionNav({ kit }: { kit: Kit }) {
-  const items = [
-    ...(kit.notes?.length ? [{ id: 'notes', label: 'Gaps and notes' }] : []),
-    { id: 'brief', label: 'Company brief' },
-    { id: 'role', label: 'The role' },
-    { id: 'questions', label: 'Questions' },
-    { id: 'flashcards', label: 'Flashcards' },
-    { id: 'schedule', label: 'Schedule' },
-  ];
+  const items = useMemo(
+    () => [
+      ...(kit.notes?.length ? [{ id: 'notes', label: 'Gaps and notes' }] : []),
+      { id: 'brief', label: 'Company brief' },
+      { id: 'role', label: 'The role' },
+      { id: 'questions', label: 'Questions' },
+      { id: 'flashcards', label: 'Flashcards' },
+      { id: 'schedule', label: 'Schedule' },
+    ],
+    [kit.notes?.length],
+  );
+  const [active, setActive] = useState(items[0]?.id ?? '');
+
+  // Scroll-spy: the section actually in view drives the highlight, not just the last click —
+  // scrolling with the mouse wheel or a screen reader's "next heading" must update it too.
+  useEffect(() => {
+    const sections = items.map((i) => document.getElementById(i.id)).filter((el): el is HTMLElement => Boolean(el));
+    if (!sections.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActive(visible[0].target.id);
+      },
+      // A band near the top of the viewport, below the sticky header — the section crossing
+      // THAT line is "current", which matches what a reader's eye is actually on.
+      { rootMargin: '-96px 0px -70% 0px', threshold: 0 },
+    );
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [items]);
+
   return (
-    <nav aria-label="Kit sections" className="lg:sticky lg:top-20 lg:self-start">
-      <ul className="scroll-x flex gap-1.5 pb-2 lg:flex-col lg:gap-0.5 lg:pb-0">
-        {items.map((i) => (
-          <li key={i.id} className="shrink-0">
-            <a
-              href={`#${i.id}`}
-              className="block rounded px-2.5 py-1.5 text-xs font-medium text-fg-muted transition hover:bg-surface-muted hover:text-fg"
-            >
-              {i.label}
-            </a>
-          </li>
-        ))}
+    <nav aria-label="Kit sections" className="lg:sticky lg:top-24 lg:self-start rounded-xl border border-border bg-surface p-2 shadow-sm">
+      <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-fg-subtle border-b border-border mb-1 hidden lg:block">
+        Navigation
+      </div>
+      <ul className="scroll-x flex gap-1 pb-1 lg:flex-col lg:gap-1 lg:pb-0">
+        {items.map((i) => {
+          const isActive = active === i.id;
+          return (
+            <li key={i.id} className="shrink-0">
+              <a
+                href={`#${i.id}`}
+                aria-current={isActive ? 'true' : undefined}
+                // Click sets the highlight immediately, so there is no lag waiting on the
+                // (smooth, therefore slow) scroll to finish before the nav agrees with you.
+                onClick={() => setActive(i.id)}
+                className={cx(
+                  'block rounded-lg px-3 py-2 text-xs font-semibold transition',
+                  isActive
+                    ? 'bg-accent-muted text-accent shadow-sm'
+                    : 'text-fg-muted hover:bg-surface-muted hover:text-accent',
+                )}
+              >
+                {i.label}
+              </a>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
@@ -285,55 +320,60 @@ function SectionNav({ kit }: { kit: Kit }) {
 function StepTimeline({ progress }: { progress: ReturnType<typeof useJobProgress> }) {
   const byStep = new Map(progress.steps.map((s) => [s.step, s]));
   return (
-    <Card className="p-4">
+    <Card className="p-5 border-accent/30 bg-surface shadow-md">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-fg">
-          {progress.phase === 'failed' ? 'Generation failed' : 'Building your kit'}
-        </h2>
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
+          </span>
+          <h2 className="text-base font-bold text-fg">
+            {progress.phase === 'failed' ? 'Generation failed' : 'Pipeline Generation in Progress'}
+          </h2>
+        </div>
         {progress.degraded ? (
-          <Badge tone="warning">live updates unavailable — polling instead</Badge>
+          <Badge tone="warning">live updates fallback — polling</Badge>
         ) : (
-          <Badge tone="accent">live</Badge>
+          <Badge tone="accent">live websocket</Badge>
         )}
       </div>
       <p className="mt-1 text-xs text-fg-muted">
-        Each step responds to what the previous one actually found. A step that could not find anything is
-        skipped and reported, not treated as a failure.
+        Crawls the company website, searches public discussion, extracts must-have requirements, and builds questions with 2-pass coverage.
       </p>
-      <ol className="mt-3 space-y-1.5">
+      <ol className="mt-4 space-y-2">
         {STEP_ORDER.map((step) => {
           const event = byStep.get(step);
           const status = event?.status ?? 'pending';
           return (
-            <li key={step} className="flex items-start gap-2 text-sm">
+            <li key={step} className="flex items-start gap-2.5 text-sm p-1.5 rounded-lg transition hover:bg-surface-muted/50">
               <span
                 aria-hidden
                 className={cx(
-                  'mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] font-bold',
+                  'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-xs font-bold',
                   status === 'ok' && 'bg-success-muted text-success',
                   status === 'skipped' && 'bg-warning-muted text-warning',
                   status === 'failed' && 'bg-danger-muted text-danger',
-                  status === 'start' && 'bg-accent-muted text-accent',
-                  status === 'pending' && 'bg-surface-muted text-fg-subtle',
+                  status === 'start' && 'bg-accent-muted text-accent animate-pulse',
+                  status === 'pending' && 'bg-surface-muted text-fg-subtle opacity-60',
                 )}
               >
-                {status === 'ok' ? '✓' : status === 'skipped' ? '–' : status === 'failed' ? '✕' : ''}
+                {status === 'ok' ? '✓' : status === 'skipped' ? '–' : status === 'failed' ? '✕' : '•'}
               </span>
-              <span className={cx('min-w-0 flex-1', status === 'pending' ? 'text-fg-subtle' : 'text-fg')}>
+              <span className={cx('min-w-0 flex-1 text-xs font-medium', status === 'pending' ? 'text-fg-subtle' : 'text-fg')}>
                 {STEP_LABELS[step] ?? step}
-                {event?.detail ? <span className="text-fg-muted"> — {event.detail}</span> : null}
+                {event?.detail ? <span className="text-fg-muted font-normal"> — {event.detail}</span> : null}
               </span>
               {event?.elapsedMs ? (
-                <span className="shrink-0 text-xs text-fg-subtle">{(event.elapsedMs / 1000).toFixed(1)}s</span>
+                <span className="shrink-0 text-[11px] text-fg-subtle font-mono">{(event.elapsedMs / 1000).toFixed(1)}s</span>
               ) : null}
             </li>
           );
         })}
       </ol>
       {progress.error ? (
-        <p role="alert" className="mt-3 rounded border border-border bg-danger-muted px-3 py-2 text-sm text-danger">
+        <div role="alert" className="mt-4 rounded-lg border border-danger/30 bg-danger-muted p-3 text-xs text-danger font-medium">
           {progress.error.message}
-        </p>
+        </div>
       ) : null}
     </Card>
   );

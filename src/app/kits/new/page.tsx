@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ApiError, api } from '@/lib/api';
@@ -15,12 +16,13 @@ export default function NewKitPage() {
   return (
     <AppShell>
       <PageHeader
-        title="New kit"
-        subtitle="The job description is pasted as text — most job boards block automated access, so this is deliberate."
+        title="Create New Kit"
+        subtitle="Paste a job description and company website. Research and questions are generated autonomously."
+        back={{ href: '/kits', label: 'Back to your kits' }}
       />
 
-      <div className="mt-5" role="tablist" aria-label="How many roles">
-        <div className="inline-flex rounded border border-border bg-surface-muted p-0.5">
+      <div className="animate-fade-up mt-5" role="tablist" aria-label="How many roles" style={{ animationDelay: '60ms' }}>
+        <div className="relative inline-flex rounded-md border border-border bg-surface-muted p-1">
           {(['single', 'batch'] as Mode[]).map((m) => (
             <button
               key={m}
@@ -28,17 +30,26 @@ export default function NewKitPage() {
               aria-selected={mode === m}
               onClick={() => setMode(m)}
               className={cx(
-                'rounded px-3 py-1.5 text-sm font-medium transition',
-                mode === m ? 'bg-surface text-fg shadow-sm' : 'text-fg-muted hover:text-fg',
+                'relative z-10 rounded px-4 py-1.5 text-sm font-medium transition duration-fast',
+                mode === m ? 'text-fg' : 'text-fg-muted hover:text-fg',
               )}
             >
+              {mode === m ? (
+                <span
+                  aria-hidden
+                  className="absolute inset-0 -z-10 rounded bg-surface"
+                  style={{ boxShadow: 'var(--shadow-sm)' }}
+                />
+              ) : null}
               {m === 'single' ? 'One role' : 'Several roles'}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="mt-4">{mode === 'single' ? <SingleForm /> : <BatchForm />}</div>
+      <div className="animate-fade-up mt-4" style={{ animationDelay: '110ms' }}>
+        {mode === 'single' ? <SingleForm /> : <BatchForm />}
+      </div>
     </AppShell>
   );
 }
@@ -53,54 +64,76 @@ function SingleForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!jd.trim()) {
+      setError('Please paste the job description text.');
+      return;
+    }
+    if (!url.trim()) {
+      setError('Please enter the target company website URL.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const res = await api.createKit({ jd, company_url: url.trim(), days });
       router.push(`/kits/${res.kitId}${res.deduped ? '' : '?fresh=1'}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not reach the server.');
+      setError(err instanceof ApiError ? err.message : String(err));
       setBusy(false);
     }
   };
 
+  const charCount = jd.trim().length;
+
   return (
-    <Card className="p-5">
+    <Card className="p-6 sm:p-7 shadow-md border-border bg-surface">
       <form onSubmit={submit} className="space-y-5" noValidate>
         <Field
-          label="Job description"
-          hint="Paste the whole posting. A thin description will produce a thin kit that says so, rather than invented requirements."
+          label="Job Description"
+          hint="Paste the complete posting. Requirements will be extracted verbatim with strict provenance."
           required
         >
           {({ id, describedBy }) => (
             <Textarea
               id={id}
-              rows={12}
+              rows={10}
               required
               value={jd}
               onChange={(e) => setJd(e.target.value)}
               aria-describedby={describedBy}
-              placeholder={'Senior Backend Engineer\n\nRequirements\n- 5+ years…'}
+              placeholder={'Senior Full-Stack Engineer\n\nAbout the Role:\nWe are looking for an experienced engineer to lead our product team...\n\nRequirements:\n- 5+ years with React & TypeScript\n- Experience designing scalable distributed systems\n- Mentoring junior engineers'}
             />
           )}
         </Field>
 
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-fg-muted font-mono">{charCount.toLocaleString()} chars</span>
+            {charCount > 0 && charCount < 200 ? (
+              <Badge tone="warning">Short posting — will produce honest minimal kit</Badge>
+            ) : charCount >= 200 ? (
+              <Badge tone="success">Detailed posting</Badge>
+            ) : null}
+          </div>
+          <span className="text-fg-subtle">Respects robots.txt & SSR crawler</span>
+        </div>
+
         <div className="grid gap-5 sm:grid-cols-[2fr_1fr]">
-          <Field label="Company website" hint="The homepage is enough — the crawler finds the careers and hiring pages itself." required>
+          <Field label="Target Company Website" hint="Homepage or careers page (e.g. https://posthog.com)" required>
             {({ id, describedBy }) => (
               <Input
                 id={id}
-                type="text"
+                type="url"
                 required
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 aria-describedby={describedBy}
-                placeholder="https://example.com"
+                placeholder="https://company.com"
               />
             )}
           </Field>
 
-          <Field label="Days before the interview" hint="1 to 60.">
+          <Field label="Days Available" hint="1 to 60 calendar days" required>
             {({ id, describedBy }) => (
               <Input
                 id={id}
@@ -116,24 +149,22 @@ function SingleForm() {
           </Field>
         </div>
 
-        <p className="text-xs text-fg-muted">
-          {jd.trim().length.toLocaleString()} characters pasted.{' '}
-          {jd.trim().length > 0 && jd.trim().length < 200 ? (
-            <span className="text-warning">That is very short — expect a deliberately thin kit.</span>
-          ) : null}
-        </p>
-
         {error ? (
-          <p role="alert" className="rounded border border-border bg-danger-muted px-3 py-2 text-sm text-danger">
+          <div role="alert" className="animate-fade-in rounded-lg border border-danger/30 bg-danger-muted p-3 text-sm text-danger">
             {error}
-          </p>
+          </div>
         ) : null}
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" variant="primary" loading={busy}>
-            Generate kit
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Button type="submit" variant="primary" size="lg" loading={busy} className="font-semibold">
+            Generate Interview Kit
           </Button>
-          <span className="text-xs text-fg-muted">Takes about 60–120 seconds. You can watch each step.</span>
+          <Link href="/kits">
+            <Button type="button" variant="ghost">
+              Cancel
+            </Button>
+          </Link>
+          <span className="text-xs text-fg-subtle">Researches hiring pages, extracts must-haves & runs 2-pass coverage.</span>
         </div>
       </form>
     </Card>
@@ -183,13 +214,13 @@ function BatchForm() {
       await api.createBatch(valid);
       router.push('/kits');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not reach the server.');
+      setError(err instanceof ApiError ? err.message : String(err));
       setBusy(false);
     }
   };
 
   return (
-    <Card className="p-5">
+    <Card className="p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-md)' }}>
       <form onSubmit={submit} className="space-y-5" noValidate>
         <div className="rounded border border-border bg-surface-muted p-3">
           <label className="text-sm font-medium text-fg" htmlFor="cases-file">
@@ -257,9 +288,16 @@ function BatchForm() {
           </p>
         ) : null}
 
-        <Button type="submit" variant="primary" loading={busy}>
-          Generate {rows.filter((r) => r.jd.trim()).length || 0} kit(s)
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" variant="primary" size="lg" loading={busy}>
+            Generate {rows.filter((r) => r.jd.trim()).length || 0} kit(s)
+          </Button>
+          <Link href="/kits">
+            <Button type="button" variant="ghost">
+              Cancel
+            </Button>
+          </Link>
+        </div>
       </form>
     </Card>
   );

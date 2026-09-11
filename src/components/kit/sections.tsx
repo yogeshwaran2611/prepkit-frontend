@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { Flashcard, Kit, Question, QuestionCategory, Requirement } from '@/lib/kit-types';
 import {
@@ -517,11 +516,6 @@ export function FlashcardsSection({ kit, actions }: { kit: Kit; actions: KitActi
       id="flashcards"
       title="Flashcards"
       subtitle={`${kit.flashcards.length} cards`}
-      actions={
-        <Link href={`/kits/${kit.source.company ? '' : ''}`} className="hidden" aria-hidden>
-          practice
-        </Link>
-      }
     >
       <AsyncBoundary
         empty={kit.flashcards.length === 0}

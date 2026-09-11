@@ -18,6 +18,7 @@ export default {
         'fg-muted': 'var(--fg-muted)',
         'fg-subtle': 'var(--fg-subtle)',
         accent: 'var(--accent)',
+        'accent-2': 'var(--accent-2)',
         'accent-fg': 'var(--accent-fg)',
         'accent-muted': 'var(--accent-muted)',
         success: 'var(--success)',

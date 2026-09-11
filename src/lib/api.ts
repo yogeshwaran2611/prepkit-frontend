@@ -37,20 +37,44 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: {
-      ...(init.body ? { 'content-type': 'application/json' } : {}),
-      ...(init.headers ?? {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      credentials: 'include',
+      headers: {
+        ...(init.body ? { 'content-type': 'application/json' } : {}),
+        ...(init.headers ?? {}),
+      },
+    });
+  } catch (cause) {
+    /**
+     * `fetch` itself throws (not a rejected-but-defined response) for several UNRELATED
+     * reasons that all look identical from here — the API being down, a CORS rejection, the
+     * wrong port, being offline — and a caller cannot tell which happened from the exception
+     * alone. `err instanceof ApiError` upstream previously swallowed ALL of these into one
+     * generic "is the API running?" sentence even when the API was, in fact, running and the
+     * real problem was a CORS mismatch. Surface the distinction we CAN make and point at
+     * DevTools for the rest, which is the only place the real reason is ever printed —
+     * browsers deliberately hide the specific CORS reason from JavaScript for security.
+     */
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    throw new ApiError(0, {
+      code: 'NETWORK',
+      message:
+        `Could not reach the API at ${API_URL}. This is either the API not running, or a CORS ` +
+        `rejection because the API does not allow requests from ${origin || 'this origin'}. ` +
+        `Open the browser console — the real reason is printed there as a "CORS" or ` +
+        `"Failed to fetch" message that this screen cannot see.`,
+      details: cause instanceof Error ? cause.message : String(cause),
+    });
+  }
 
   if (res.status === 204) return undefined as T;
 
   const json = (await res.json().catch(() => null)) as { data?: T; error?: ApiErrorShape } | null;
   if (!res.ok || !json || json.error) {
-    throw new ApiError(res.status, json?.error ?? { code: 'NETWORK', message: 'Could not reach the server.' });
+    throw new ApiError(res.status, json?.error ?? { code: 'NETWORK', message: 'The server returned an unreadable response.' });
   }
   return json.data as T;
 }
@@ -182,6 +206,8 @@ export const api = {
     }),
 
   listPractice: (kitId: string) => request<{ events: PracticeEventView[] }>(`/api/kits/${kitId}/practice`),
+  clearPractice: (kitId: string) =>
+    request<{ events: PracticeEventView[] }>(`/api/kits/${kitId}/practice`, { method: 'DELETE' }),
 
   weakSpots: (kitId: string) => request<WeakSpotsResponse>(`/api/kits/${kitId}/weak-spots`),
 

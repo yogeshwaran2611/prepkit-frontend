@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Badge, Button, Card, Skeleton, cx } from '../ui';
 
@@ -18,6 +19,7 @@ export interface AsyncBoundaryProps {
   emptyTitle?: string;
   emptyBody?: string;
   emptyAction?: ReactNode;
+  emptyIllustration?: ReactNode;
   onRetry?: () => void;
   skeleton?: ReactNode;
   children: ReactNode;
@@ -30,6 +32,7 @@ export function AsyncBoundary({
   emptyTitle = 'Nothing here yet',
   emptyBody,
   emptyAction,
+  emptyIllustration,
   onRetry,
   skeleton,
   children,
@@ -38,10 +41,10 @@ export function AsyncBoundary({
     return (
       <div aria-busy="true" aria-live="polite">
         {skeleton ?? (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-4 w-1/2" />
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
           </div>
         )}
       </div>
@@ -49,10 +52,10 @@ export function AsyncBoundary({
   }
   if (error) {
     return (
-      <div role="alert" className="rounded border border-border bg-danger-muted p-4">
-        <p className="text-sm font-medium text-danger">{error}</p>
+      <div role="alert" className="animate-fade-in rounded-xl border border-danger/30 bg-danger-muted p-6 text-center">
+        <p className="text-sm font-semibold text-danger">{error}</p>
         {onRetry ? (
-          <Button size="sm" className="mt-3" onClick={onRetry}>
+          <Button size="sm" className="mt-4" onClick={onRetry}>
             Try again
           </Button>
         ) : null}
@@ -61,19 +64,26 @@ export function AsyncBoundary({
   }
   if (empty) {
     return (
-      <div className="rounded border border-dashed border-border p-6 text-center">
-        <p className="text-sm font-medium text-fg">{emptyTitle}</p>
-        {emptyBody ? <p className="mx-auto mt-1 max-w-sm text-sm text-fg-muted">{emptyBody}</p> : null}
-        {emptyAction ? <div className="mt-4 flex justify-center">{emptyAction}</div> : null}
+      <div className="animate-fade-up relative overflow-hidden rounded-2xl border border-dashed border-border/80 bg-surface/70 px-6 py-14 text-center backdrop-blur-sm shadow-sm">
+        {emptyIllustration ? (
+          <div className="mx-auto mb-5 flex justify-center">{emptyIllustration}</div>
+        ) : (
+          <div
+            aria-hidden
+            className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl text-2xl text-accent bg-accent-muted shadow-sm"
+          >
+            ✦
+          </div>
+        )}
+        <h3 className="text-lg font-bold text-fg tracking-tight">{emptyTitle}</h3>
+        {emptyBody ? <p className="mx-auto mt-2 max-w-md text-sm text-fg-muted leading-relaxed">{emptyBody}</p> : null}
+        {emptyAction ? <div className="mt-6 flex justify-center">{emptyAction}</div> : null}
       </div>
     );
   }
   return <>{children}</>;
 }
 
-// --- SectionCard ----------------------------------------------------------
-
-/** Every kit section uses this, which is what makes the page read as one product. */
 export function SectionCard({
   title,
   subtitle,
@@ -90,15 +100,19 @@ export function SectionCard({
   id?: string;
 }) {
   return (
-    <Card id={id} className={cx('scroll-mt-20 overflow-hidden', busy && 'opacity-70')}>
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
+    <Card
+      id={id}
+      className={cx('scroll-mt-20 overflow-hidden rounded-xl border border-border bg-surface transition-opacity duration-slow shadow-sm', busy && 'opacity-70')}
+    >
+      <div aria-hidden className="h-1 w-full bg-accent" />
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface-muted/40 px-5 py-3.5">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold tracking-tight text-fg">{title}</h2>
+          <h2 className="text-base font-bold tracking-tight text-fg">{title}</h2>
           {subtitle ? <div className="mt-0.5 text-xs text-fg-muted">{subtitle}</div> : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">{actions}</div>
       </div>
-      <div className={cx('px-4 py-4', busy && 'pointer-events-none')}>{children}</div>
+      <div className={cx('p-5 sm:p-6', busy && 'pointer-events-none')}>{children}</div>
     </Card>
   );
 }
@@ -312,33 +326,82 @@ export function SortableList<T extends { id: string }>({
 
 // --- Misc -----------------------------------------------------------------
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+  back,
+}: {
+  title: string;
+  subtitle?: ReactNode;
+  actions?: ReactNode;
+  /** A "‹ Back to X" link above the title — every page that isn't a top-level destination gets one. */
+  back?: { href: string; label: string };
+}) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
+    <header className="animate-fade-up flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
       <div className="min-w-0">
-        <h1 className="truncate text-xl font-semibold tracking-tight text-fg">{title}</h1>
-        {subtitle ? <div className="mt-1 text-sm text-fg-muted">{subtitle}</div> : null}
+        {back ? (
+          <Link
+            href={back.href}
+            className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-fg-muted transition hover:text-accent"
+          >
+            <span aria-hidden className="transition group-hover:-translate-x-0.5">
+              ←
+            </span>
+            {back.label}
+          </Link>
+        ) : null}
+        <h1 className="truncate text-2xl font-extrabold tracking-tight text-fg sm:text-3xl">
+          {title}
+        </h1>
+        {subtitle ? <div className="mt-1.5 max-w-2xl text-sm text-fg-muted leading-relaxed">{subtitle}</div> : null}
       </div>
       <div className="flex items-center gap-2">{actions}</div>
     </header>
   );
 }
 
-export function StatChip({ label, value, tone }: { label: string; value: ReactNode; tone?: 'neutral' | 'success' | 'warning' | 'danger' }) {
+export function StatChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: ReactNode;
+  tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'orange' | 'blue' | 'purple' | 'red' | 'indigo' | 'green';
+}) {
   return (
-    <div className="rounded border border-border bg-surface-muted px-2.5 py-1.5">
-      <div className="text-[11px] uppercase tracking-wide text-fg-subtle">{label}</div>
+    <div
+      className="rounded-xl border border-border bg-surface px-4 py-3 shadow-sm transition duration-fast hover:-translate-y-0.5"
+    >
+      <div className="text-[11px] font-bold uppercase tracking-wider text-fg-subtle">{label}</div>
       <div
         className={cx(
-          'text-sm font-semibold',
-          tone === 'success' && 'text-success',
-          tone === 'warning' && 'text-warning',
-          tone === 'danger' && 'text-danger',
+          'mt-1 text-xl font-extrabold tabular-nums tracking-tight',
+          (tone === 'success' || tone === 'green') && 'text-[var(--color-green)]',
+          (tone === 'warning' || tone === 'orange') && 'text-[var(--color-orange)]',
+          (tone === 'danger' || tone === 'red') && 'text-[var(--color-red)]',
+          tone === 'blue' && 'text-[var(--color-blue)]',
+          tone === 'purple' && 'text-[var(--color-purple)]',
+          tone === 'indigo' && 'text-accent',
           (!tone || tone === 'neutral') && 'text-fg',
         )}
       >
         {value}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Fades and lifts children in, staggered by index. Used for lists (kit cards, questions)
+ * so the page feels alive on first paint without animating anything the user is editing.
+ */
+export function Reveal({ index = 0, children, className }: { index?: number; children: ReactNode; className?: string }) {
+  return (
+    <div className={cx('animate-fade-up', className)} style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}>
+      {children}
     </div>
   );
 }
@@ -358,12 +421,4 @@ export function CoverageMeter({ covered, total }: { covered: number; total: numb
       </span>
     </div>
   );
-}
-
-export function ConfirmDialogTrigger({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  return <>{children}</>;
 }
