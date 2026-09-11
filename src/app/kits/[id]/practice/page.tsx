@@ -289,7 +289,7 @@ export default function PracticePage() {
                     <div
                       onClick={() => setRevealed((r) => !r)}
                       className={cx(
-                        'preserve-3d relative w-full min-h-[320px] cursor-pointer transition-transform duration-500 rounded-2xl shadow-md select-none',
+                        'preserve-3d relative w-full min-h-[380px] sm:min-h-[320px] max-h-[70vh] cursor-pointer transition-transform duration-500 rounded-2xl shadow-md select-none',
                         revealed && 'rotate-y-180'
                       )}
                     >
@@ -315,7 +315,7 @@ export default function PracticePage() {
                           </div>
                         </div>
 
-                        <div className="my-auto py-6">
+                        <div className="my-auto min-h-0 overflow-y-auto py-6">
                           <p className="text-xl sm:text-2xl font-bold leading-relaxed text-fg text-center">
                             {card.front}
                           </p>

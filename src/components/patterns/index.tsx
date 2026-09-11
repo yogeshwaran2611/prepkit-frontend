@@ -357,7 +357,7 @@ export function PageHeader({
         </h1>
         {subtitle ? <div className="mt-1.5 max-w-2xl text-sm text-fg-muted leading-relaxed">{subtitle}</div> : null}
       </div>
-      <div className="flex items-center gap-2">{actions}</div>
+      <div className="flex flex-wrap items-center gap-2">{actions}</div>
     </header>
   );
 }
