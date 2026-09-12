@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ServerWarmup } from '@/components/patterns/server-warmup';
 
 export const metadata: Metadata = {
   title: 'Prep Kit — turn a job description into an interview plan',
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        {children}
+        <ServerWarmup>{children}</ServerWarmup>
       </body>
     </html>
   );
